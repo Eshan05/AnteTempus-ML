@@ -19,19 +19,12 @@ Open the [HTML report](results/provenance.html) locally to inspect the records. 
 | Validation | Full-data versus training-only preprocessing, and random versus forward splits on a synthetic time series. |
 | Target-derived features | A timestamp can pass even when the feature encodes the outcome being predicted. |
 | Real CI jobs | The model predicts job failure at startup, before the job's final duration is known. |
+| Backdated spending | A join accepts a feature stamped at the cutoff. The source audit checks whether it used late transactions or revisions. |
 | 30-day churn labels | Past tickets provide features. Future cancellations provide labels. Day 30 counts, but day 31 does not. Rows with incomplete follow-up stay unlabeled. |
 
-### Synthetic churn
+### Backdated spending
 
-The [churn benchmark](results/report.md) adds three tickets to churners' counts after prediction. The latest-value join picks up those tickets, and the model scores 0.974 offline. Give the same model only the counts available at prediction time, and its AUC drops to 0.609.
-
-```mermaid
-xychart-beta horizontal
-    title "Churn scores with three future tickets"
-    x-axis ["Latest join offline", "Latest join replay", "As-of join offline"]
-    y-axis "ROC-AUC (higher is better)" 0 --> 1
-    bar [0.974, 0.609, 0.609]
-```
+In the [backfill experiment](results/churn-backfill.md), every transaction occurred before prediction. Some records arrived or were corrected afterward. The ordinary join trusts the backdated feature timestamp, while the source audit catches the unavailable inputs and reconstructs the spending average. The study uses 8,000 synthetic customers per seed, a 30% target churn rate, and five paired seeds. It compares retrospective scoring, historical replay, and retraining on historical inputs.
 
 ### Real CI jobs
 
@@ -78,10 +71,10 @@ uv run --no-project --python 3.12 --with-editable . -- python -m ante_tempus_ml.
   --window-bench results/raw/window-bench.json --out results/raw/rebuilt-report.html
 ```
 
-The separate churn benchmark writes `results/report.md`:
+The backfill experiment writes `results/raw/churn-backfill.md`:
 
 ```sh
-uv run --no-project --python 3.12 --with-editable . --with pandas -- python -m ante_tempus_ml.experiment
+uv run --no-project --python 3.12 --with-editable . -- python -m ante_tempus_ml.churn_backfill
 ```
 
 </details>
@@ -93,7 +86,7 @@ The source-record examples check known inputs. They do not trace arbitrary SQL o
 <details>
 <summary>Study methods and sources</summary>
 
-**Point-in-time joins.** The NumPy join uses integer timestamps and supports a fixed ingestion delay or per-row availability, plus a freshness limit. Equal availability times favor the last input row. An empty feature table returns no matches. When packing entity and time into one integer would overflow, the join searches by entity and timestamp separately. Tests compare matches against a brute-force scan and compare matched timestamps against pandas.
+**Point-in-time joins.** Each entity has a sorted timeline searched by availability. The join uses integer timestamps and supports a fixed ingestion delay or per-row availability, plus a freshness limit. Equal availability times favor the last input row. An empty feature table returns no matches. Tests check selected row indices against a brute-force scan and pandas.
 
 **Validation.** The scaler study changes only the rows used to fit the scaler. Both arms use the same training labels and test rows. The time-series study uses the same nearest-neighbor classifier on equal-sized random and forward folds. Their scores come from different rows, so the gap alone does not measure leakage. The study refits the classifier on all development data before scoring the untouched future holdout. Both studies run five seeds.
 
