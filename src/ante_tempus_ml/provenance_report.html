@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ante Tempus ML | Spending feature audit</title>
+  <style>
+    :root { color-scheme: light; font: 15px/1.5 system-ui, sans-serif; color: #17232b; background: #f6f8fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { border-bottom: 1px solid #cfdae3; background: #fff; }
+    .shell { width: min(calc(100% - 32px), 1040px); margin: auto; }
+    header .shell { padding: 11px 0; color: #415664; font-size: .85rem; font-weight: 700; }
+    main { padding: 25px 0 36px; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    h2 { margin: 20px 0 7px; font-size: 1rem; }
+    h3 { margin: 0; font-size: .95rem; }
+    .subtitle, .cause { margin: 3px 0 0; color: #415664; }
+    nav { display: flex; flex-wrap: wrap; gap: 5px 16px; margin-top: 9px; font-size: .88rem; }
+    details { border-block: 1px solid #d6dfe6; background: #fff; }
+    details + details { border-top: 0; }
+    summary { padding: 13px 16px; cursor: pointer; }
+    summary:hover { background: #edf3f6; }
+    summary:focus-visible, a:focus-visible { outline: 2px solid #175b99; outline-offset: -2px; }
+    .case-title { font-weight: 700; overflow-wrap: anywhere; }
+    .checks { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 3px 0 0 17px; color: #415664; font-size: .84rem; }
+    .good { color: #14614d; }
+    .bad { color: #9b3425; }
+    .values { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 1px 0; background: #d6dfe6; }
+    .values div { min-width: 0; padding: 9px 16px; background: #edf3f6; }
+    dt { color: #415664; font-size: .85rem; overflow-wrap: anywhere; }
+    dd { margin: 4px 0 0; font-weight: 720; font-variant-numeric: tabular-nums; }
+    .fit-detail { display: block; margin-top: 2px; color: #415664; font-size: .79rem; font-weight: 400; }
+    .trail { padding: 13px 16px 15px; }
+    .trail ul { list-style: none; margin: 9px 0 0; padding: 0; }
+    .record { display: grid; grid-template-columns: minmax(8rem, .8fr) minmax(0, 2fr) minmax(0, 1fr); gap: 4px 12px; align-items: baseline; padding: 8px 10px; border-top: 1px solid #d6dfe6; font-size: .86rem; }
+    .record > div { display: flex; flex-wrap: wrap; gap: 1px 10px; overflow-wrap: anywhere; }
+    .record.witness { border-inline-start: 3px solid #a53c28; background: #fff2eb; }
+    .record:target { outline: 2px solid #175b99; outline-offset: -2px; }
+    a { color: #175b99; }
+    .study { padding: 12px 16px 15px; border-top: 1px solid #d6dfe6; background: #fff; }
+    .ci-cohort + .ci-cohort { margin-top: 18px; }
+    .axis-label { margin: 4px 0; color: #415664; font-size: .8rem; }
+    .auc-chart { list-style: none; padding: 0; margin: 5px 0 9px; }
+    .auc-chart li { display: grid; grid-template-columns: minmax(6.25rem, 9rem) minmax(0, 400px) 3.5rem; gap: 8px; align-items: center; margin-block: 4px; font-size: .84rem; }
+    .auc-track { display: block; height: 9px; background: #e2e8ec; }
+    .auc-track i { display: block; height: 9px; background: #14735e; }
+    .auc-chart strong, table { font-variant-numeric: tabular-nums; }
+    .score-scroll { overflow-x: auto; padding: 0 16px 12px; }
+    table { width: 100%; border-collapse: collapse; text-align: right; font-size: .78rem; }
+    th, td { border-bottom: 1px solid #d6dfe6; padding: 4px; }
+    @media (max-width: 670px) {
+      .values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .record { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header><div class="shell">Ante Tempus ML / Temporal provenance</div></header>
+  <main class="shell">
+    <h1>Spending feature audit</h1>
+    <p class="subtitle">Feature computation and scaler fitting &middot; Synthetic records</p>
+    <nav aria-label="Experiments"><a href="#averages">Monthly averages</a><a href="#normalization">Normalization</a><a href="#validation">Validation studies</a><a href="#target-leakage">Target leakage</a><a href="#churn">Churn labels</a>$ci_link<a href="#fixed-window">Fixed-window verifier</a></nav>
+    <section aria-labelledby="averages">
+      <h2 id="averages">Monthly averages</h2>
+      $averages
+    </section>
+    <section aria-labelledby="normalization">
+      <h2 id="normalization">Normalization</h2>
+      $scaling
+    </section>
+    <section aria-labelledby="validation">
+      <h2 id="validation">Validation studies</h2>
+      $validation
+    </section>
+    <section aria-labelledby="target-leakage">
+      <h2 id="target-leakage">Target-derived features</h2>
+      $target_leakage
+    </section>
+    <section aria-labelledby="churn">
+      <h2 id="churn">30-day churn labels</h2>
+      $churn
+    </section>
+    $ci_duration
+    $fixed_window
+  </main>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="450" viewBox="0 0 640 450" role="img" aria-labelledby="title description">
+  <title id="title">Fixed-window audit time</title>
+  <desc id="description">Four methods measured at 100, 8,000, and 40,000 queries. All bars use a 0 to 600 millisecond scale; shorter is faster. AT-ML scan wins at 100 queries. AT-ML index wins at 8,000 and 40,000.</desc>
+  <style>
+    svg { font-family: system-ui, -apple-system, sans-serif; }
+    text { fill: #1f2328; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subheading { fill: #59636e; font-size: 15px; }
+    .batch { font-size: 17px; font-weight: 650; }
+    .value { text-anchor: end; font-variant-numeric: tabular-nums; }
+    .surface { fill: #ffffff; }
+    .track { fill: #edf0f3; }
+    .rule { stroke: #d8dee4; }
+    .scan { fill: #ad6900; }
+    .index { fill: #235fe6; }
+    .replay { fill: #008577; }
+    .prefix { fill: #8452c2; }
+    @media (prefers-color-scheme: dark) {
+      text { fill: #f0f3f6; }
+      .subheading { fill: #a5afba; }
+      .surface { fill: #0d1117; }
+      .track { fill: #252c34; }
+      .rule { stroke: #30363d; }
+      .scan { fill: #fabd38; }
+      .index { fill: #5987f7; }
+      .replay { fill: #2dd4bf; }
+      .prefix { fill: #bd8bf4; }
+    }
+  </style>
+  <defs><rect id="track" class="track" x="152" y="-10" width="408" height="10" rx="2"/></defs>
+  <rect class="surface" width="640" height="450"/>
+  <text class="heading" x="16" y="31">Fixed-window audit time</text>
+  <text class="subheading" x="16" y="54">Median total time, including setup. Lower is better.</text>
+  <g transform="translate(0 69)">
+    <path class="rule" d="M16 0H624"/>
+    <text class="batch" x="16" y="24">100 queries</text>
+    <g transform="translate(0 47)">
+      <text x="16">AT-ML scan</text>
+      <use href="#track"/>
+      <rect class="scan" x="152" y="-10" width="52.36" height="10" rx="2"/>
+      <text class="value" x="624">77 ms</text>
+    </g>
+    <g transform="translate(0 69)">
+      <text x="16">AT-ML index</text>
+      <use href="#track"/>
+      <rect class="index" x="152" y="-10" width="68.68" height="10" rx="2"/>
+      <text class="value" x="624">101 ms</text>
+    </g>
+    <g transform="translate(0 91)">
+      <text x="16">DuckDB replay</text>
+      <use href="#track"/>
+      <rect class="replay" x="152" y="-10" width="56.44" height="10" rx="2"/>
+      <text class="value" x="624">83 ms</text>
+    </g>
+    <g transform="translate(0 113)">
+      <text x="16">DuckDB prefix</text>
+      <use href="#track"/>
+      <rect class="prefix" x="152" y="-10" width="102.68" height="10" rx="2"/>
+      <text class="value" x="624">151 ms</text>
+    </g>
+  </g>
+  <g transform="translate(0 193)">
+    <path class="rule" d="M16 0H624"/>
+    <text class="batch" x="16" y="24">8,000 queries</text>
+    <g transform="translate(0 47)">
+      <text x="16">AT-ML scan</text>
+      <use href="#track"/>
+      <rect class="scan" x="152" y="-10" width="102" height="10" rx="2"/>
+      <text class="value" x="624">150 ms</text>
+    </g>
+    <g transform="translate(0 69)">
+      <text x="16">AT-ML index</text>
+      <use href="#track"/>
+      <rect class="index" x="152" y="-10" width="75.48" height="10" rx="2"/>
+      <text class="value" x="624">111 ms</text>
+    </g>
+    <g transform="translate(0 91)">
+      <text x="16">DuckDB replay</text>
+      <use href="#track"/>
+      <rect class="replay" x="152" y="-10" width="93.16" height="10" rx="2"/>
+      <text class="value" x="624">137 ms</text>
+    </g>
+    <g transform="translate(0 113)">
+      <text x="16">DuckDB prefix</text>
+      <use href="#track"/>
+      <rect class="prefix" x="152" y="-10" width="138.04" height="10" rx="2"/>
+      <text class="value" x="624">203 ms</text>
+    </g>
+  </g>
+  <g transform="translate(0 317)">
+    <path class="rule" d="M16 0H624"/>
+    <text class="batch" x="16" y="24">40,000 queries</text>
+    <g transform="translate(0 47)">
+      <text x="16">AT-ML scan</text>
+      <use href="#track"/>
+      <rect class="scan" x="152" y="-10" width="397.12" height="10" rx="2"/>
+      <text class="value" x="624">584 ms</text>
+    </g>
+    <g transform="translate(0 69)">
+      <text x="16">AT-ML index</text>
+      <use href="#track"/>
+      <rect class="index" x="152" y="-10" width="128.52" height="10" rx="2"/>
+      <text class="value" x="624">189 ms</text>
+    </g>
+    <g transform="translate(0 91)">
+      <text x="16">DuckDB replay</text>
+      <use href="#track"/>
+      <rect class="replay" x="152" y="-10" width="193.8" height="10" rx="2"/>
+      <text class="value" x="624">285 ms</text>
+    </g>
+    <g transform="translate(0 113)">
+      <text x="16">DuckDB prefix</text>
+      <use href="#track"/>
+      <rect class="prefix" x="152" y="-10" width="279.48" height="10" rx="2"/>
+      <text class="value" x="624">411 ms</text>
+    </g>
+  </g>
+</svg>

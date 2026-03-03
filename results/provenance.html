@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ante Tempus ML | Spending feature audit</title>
+  <style>
+    :root { color-scheme: light; font: 15px/1.5 system-ui, sans-serif; color: #17232b; background: #f6f8fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { border-bottom: 1px solid #cfdae3; background: #fff; }
+    .shell { width: min(calc(100% - 32px), 1040px); margin: auto; }
+    header .shell { padding: 11px 0; color: #415664; font-size: .85rem; font-weight: 700; }
+    main { padding: 25px 0 36px; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    h2 { margin: 20px 0 7px; font-size: 1rem; }
+    h3 { margin: 0; font-size: .95rem; }
+    .subtitle, .cause { margin: 3px 0 0; color: #415664; }
+    nav { display: flex; flex-wrap: wrap; gap: 5px 16px; margin-top: 9px; font-size: .88rem; }
+    details { border-block: 1px solid #d6dfe6; background: #fff; }
+    details + details { border-top: 0; }
+    summary { padding: 13px 16px; cursor: pointer; }
+    summary:hover { background: #edf3f6; }
+    summary:focus-visible, a:focus-visible { outline: 2px solid #175b99; outline-offset: -2px; }
+    .case-title { font-weight: 700; overflow-wrap: anywhere; }
+    .checks { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 3px 0 0 17px; color: #415664; font-size: .84rem; }
+    .good { color: #14614d; }
+    .bad { color: #9b3425; }
+    .values { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 1px 0; background: #d6dfe6; }
+    .values div { min-width: 0; padding: 9px 16px; background: #edf3f6; }
+    dt { color: #415664; font-size: .85rem; overflow-wrap: anywhere; }
+    dd { margin: 4px 0 0; font-weight: 720; font-variant-numeric: tabular-nums; }
+    .fit-detail { display: block; margin-top: 2px; color: #415664; font-size: .79rem; font-weight: 400; }
+    .trail { padding: 13px 16px 15px; }
+    .trail ul { list-style: none; margin: 9px 0 0; padding: 0; }
+    .record { display: grid; grid-template-columns: minmax(8rem, .8fr) minmax(0, 2fr) minmax(0, 1fr); gap: 4px 12px; align-items: baseline; padding: 8px 10px; border-top: 1px solid #d6dfe6; font-size: .86rem; }
+    .record > div { display: flex; flex-wrap: wrap; gap: 1px 10px; overflow-wrap: anywhere; }
+    .record.witness { border-inline-start: 3px solid #a53c28; background: #fff2eb; }
+    .record:target { outline: 2px solid #175b99; outline-offset: -2px; }
+    a { color: #175b99; }
+    .study { padding: 12px 16px 15px; border-top: 1px solid #d6dfe6; background: #fff; }
+    .ci-cohort + .ci-cohort { margin-top: 18px; }
+    .axis-label { margin: 4px 0; color: #415664; font-size: .8rem; }
+    .auc-chart { list-style: none; padding: 0; margin: 5px 0 9px; }
+    .auc-chart li { display: grid; grid-template-columns: minmax(6.25rem, 9rem) minmax(0, 400px) 3.5rem; gap: 8px; align-items: center; margin-block: 4px; font-size: .84rem; }
+    .auc-track { display: block; height: 9px; background: #e2e8ec; }
+    .auc-track i { display: block; height: 9px; background: #14735e; }
+    .auc-chart strong, table { font-variant-numeric: tabular-nums; }
+    .score-scroll { overflow-x: auto; padding: 0 16px 12px; }
+    table { width: 100%; border-collapse: collapse; text-align: right; font-size: .78rem; }
+    th, td { border-bottom: 1px solid #d6dfe6; padding: 4px; }
+    @media (max-width: 670px) {
+      .values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .record { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header><div class="shell">Ante Tempus ML / Temporal provenance</div></header>
+  <main class="shell">
+    <h1>Spending feature audit</h1>
+    <p class="subtitle">Feature computation and scaler fitting &middot; Synthetic records</p>
+    <nav aria-label="Experiments"><a href="#averages">Monthly averages</a><a href="#normalization">Normalization</a><a href="#validation">Validation studies</a><a href="#target-leakage">Target leakage</a><a href="#churn">Churn labels</a><a href="#ci-duration">Real CI</a><a href="#fixed-window">Fixed-window verifier</a></nav>
+    <section aria-labelledby="averages">
+      <h2 id="averages">Monthly averages</h2>
+      
+      <details id="hidden" open>
+        <summary><span class="case-title">Future transaction in a backdated average</span>
+          <span class="checks"><span>Candidate timestamp <b class="good">Eligible</b></span>
+          <span>Candidate inputs <b class="bad">Flagged</b></span></span>
+        </summary>
+        <dl class="values">
+          <div><dt>Prediction cutoff</dt><dd>2026-11-10</dd></div>
+          <div><dt>Candidate availability</dt><dd>2026-11-10</dd></div>
+          <div><dt>Batch average</dt><dd>$50.00</dd></div>
+          <div><dt>Replay average</dt><dd>$30.00</dd></div>
+        </dl>
+        <div class="trail">
+          <p class="cause">As-of join: <strong>Cutoff update</strong> (2026-11-10) &middot;
+            $50.00 &middot; <span class="bad">Unavailable inputs</span></p>
+          <h3>Source records</h3>
+          
+          <p class="cause">Candidate inputs unavailable at prediction time: <a href="#hidden-T3-v1">T3-v1</a></p>
+          <ul>
+          <li id="hidden-T1-v1" class="record">
+            <div><strong>T1-v1</strong> <span>$20.00</span></div>
+            <div><span>Event 2026-11-04</span> <span>Available 2026-11-04</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="hidden-T2-v1" class="record">
+            <div><strong>T2-v1</strong> <span>$40.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-08</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="hidden-T3-v1" class="record witness">
+            <div><strong>T3-v1</strong> <span>$90.00</span></div>
+            <div><span>Event 2026-11-30</span> <span>Available 2026-11-30</span></div>
+            <div>Batch <strong class="bad">&middot; After cutoff</strong></div>
+          </li></ul>
+        </div>
+      </details>
+      <details id="declared">
+        <summary><span class="case-title">Same average with an honest availability date</span>
+          <span class="checks"><span>Candidate timestamp <b class="bad">Too late</b></span>
+          <span>Candidate inputs <b class="bad">Flagged</b></span></span>
+        </summary>
+        <dl class="values">
+          <div><dt>Prediction cutoff</dt><dd>2026-11-10</dd></div>
+          <div><dt>Candidate availability</dt><dd>2026-11-30</dd></div>
+          <div><dt>Batch average</dt><dd>$50.00</dd></div>
+          <div><dt>Replay average</dt><dd>$30.00</dd></div>
+        </dl>
+        <div class="trail">
+          <p class="cause">As-of join: <strong>Previous update</strong> (2026-11-09) &middot;
+            $30.00 &middot; <span class="good">No unavailable inputs</span></p>
+          <h3>Source records</h3>
+          
+          <p class="cause">Candidate inputs unavailable at prediction time: <a href="#declared-T3-v1">T3-v1</a></p>
+          <ul>
+          <li id="declared-T1-v1" class="record">
+            <div><strong>T1-v1</strong> <span>$20.00</span></div>
+            <div><span>Event 2026-11-04</span> <span>Available 2026-11-04</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="declared-T2-v1" class="record">
+            <div><strong>T2-v1</strong> <span>$40.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-08</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="declared-T3-v1" class="record witness">
+            <div><strong>T3-v1</strong> <span>$90.00</span></div>
+            <div><span>Event 2026-11-30</span> <span>Available 2026-11-30</span></div>
+            <div>Batch <strong class="bad">&middot; After cutoff</strong></div>
+          </li></ul>
+        </div>
+      </details>
+      <details id="revision">
+        <summary><span class="case-title">Late correction to an earlier transaction</span>
+          <span class="checks"><span>Candidate timestamp <b class="good">Eligible</b></span>
+          <span>Candidate inputs <b class="bad">Flagged</b></span></span>
+        </summary>
+        <dl class="values">
+          <div><dt>Prediction cutoff</dt><dd>2026-11-10</dd></div>
+          <div><dt>Candidate availability</dt><dd>2026-11-10</dd></div>
+          <div><dt>Batch average</dt><dd>$45.00</dd></div>
+          <div><dt>Replay average</dt><dd>$30.00</dd></div>
+        </dl>
+        <div class="trail">
+          <p class="cause">As-of join: <strong>Cutoff update</strong> (2026-11-10) &middot;
+            $45.00 &middot; <span class="bad">Unavailable inputs</span></p>
+          <h3>Source records</h3>
+          
+          <p class="cause">Candidate inputs unavailable at prediction time: <a href="#revision-T2-v2">T2-v2</a></p>
+          <ul>
+          <li id="revision-T1-v1" class="record">
+            <div><strong>T1-v1</strong> <span>$20.00</span></div>
+            <div><span>Event 2026-11-04</span> <span>Available 2026-11-04</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="revision-T2-v1" class="record">
+            <div><strong>T2-v1</strong> <span>$40.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-08</span></div>
+            <div>Replay</div>
+          </li>
+          <li id="revision-T2-v2" class="record witness">
+            <div><strong>T2-v2</strong> <span>$70.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-12</span></div>
+            <div>Batch <strong class="bad">&middot; After cutoff</strong></div>
+          </li></ul>
+        </div>
+      </details>
+      <details id="clean">
+        <summary><span class="case-title">Clean historical average</span>
+          <span class="checks"><span>Candidate timestamp <b class="good">Eligible</b></span>
+          <span>Candidate inputs <b class="good">Passed</b></span></span>
+        </summary>
+        <dl class="values">
+          <div><dt>Prediction cutoff</dt><dd>2026-11-10</dd></div>
+          <div><dt>Candidate availability</dt><dd>2026-11-10</dd></div>
+          <div><dt>Batch average</dt><dd>$30.00</dd></div>
+          <div><dt>Replay average</dt><dd>$30.00</dd></div>
+        </dl>
+        <div class="trail">
+          <p class="cause">As-of join: <strong>Cutoff update</strong> (2026-11-10) &middot;
+            $30.00 &middot; <span class="good">No unavailable inputs</span></p>
+          <h3>Source records</h3>
+          
+          <p class="cause">All candidate inputs were available at prediction time.</p>
+          <ul>
+          <li id="clean-T1-v1" class="record">
+            <div><strong>T1-v1</strong> <span>$20.00</span></div>
+            <div><span>Event 2026-11-04</span> <span>Available 2026-11-04</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="clean-T2-v1" class="record">
+            <div><strong>T2-v1</strong> <span>$40.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-08</span></div>
+            <div>Batch / Replay</div>
+          </li>
+          <li id="clean-T2-v2" class="record">
+            <div><strong>T2-v2</strong> <span>$70.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-12</span></div>
+            <div>Not used</div>
+          </li>
+          <li id="clean-T3-v1" class="record">
+            <div><strong>T3-v1</strong> <span>$90.00</span></div>
+            <div><span>Event 2026-11-30</span> <span>Available 2026-11-30</span></div>
+            <div>Not used</div>
+          </li></ul>
+        </div>
+      </details>
+    </section>
+    <section aria-labelledby="normalization">
+      <h2 id="normalization">Normalization</h2>
+      
+      <details id="scaler-leak" open>
+        <summary><span class="case-title">Scaler fit on the full dataset</span>
+          <span class="checks"><span>Candidate timestamp <b class="good">Eligible</b></span>
+          <span>Candidate inputs <b class="bad">Flagged</b></span></span>
+        </summary>
+        <dl class="values">
+          <div><dt>Prediction cutoff</dt><dd>2026-11-10</dd></div>
+          <div><dt>Candidate availability</dt><dd>2026-11-10</dd></div>
+          <div><dt>Batch z-score</dt><dd>0.00
+      <span class="fit-detail">Fit mean $50.00 &middot; scale $29.44</span></dd></div><div><dt>Replay z-score</dt><dd>2.00
+      <span class="fit-detail">Fit mean $30.00 &middot; scale $10.00</span></dd></div>
+        </dl>
+        <div class="trail">
+          <p class="cause">As-of join: <strong>Cutoff update</strong> (2026-11-10) &middot;
+            0.00 &middot; <span class="bad">Unavailable inputs</span></p>
+          <h3>Scaler fit records</h3>
+          <p class="cause">Prediction input: <strong>$50.00</strong></p>
+          <p class="cause">Candidate inputs unavailable at prediction time: <a href="#scaler-leak-T3-v1">T3-v1</a></p>
+          <ul>
+          <li id="scaler-leak-T1-v1" class="record">
+            <div><strong>T1-v1</strong> <span>$20.00</span></div>
+            <div><span>Event 2026-11-04</span> <span>Available 2026-11-04</span></div>
+            <div>Batch fit / Replay fit</div>
+          </li>
+          <li id="scaler-leak-T2-v1" class="record">
+            <div><strong>T2-v1</strong> <span>$40.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-08</span></div>
+            <div>Batch fit / Replay fit</div>
+          </li>
+          <li id="scaler-leak-T3-v1" class="record witness">
+            <div><strong>T3-v1</strong> <span>$90.00</span></div>
+            <div><span>Event 2026-11-30</span> <span>Available 2026-11-30</span></div>
+            <div>Batch fit <strong class="bad">&middot; After cutoff</strong></div>
+          </li></ul>
+        </div>
+      </details>
+      <details id="scaler-clean">
+        <summary><span class="case-title">Scaler fit before prediction</span>
+          <span class="checks"><span>Candidate timestamp <b class="good">Eligible</b></span>
+          <span>Candidate inputs <b class="good">Passed</b></span></span>
+        </summary>
+        <dl class="values">
+          <div><dt>Prediction cutoff</dt><dd>2026-11-10</dd></div>
+          <div><dt>Candidate availability</dt><dd>2026-11-10</dd></div>
+          <div><dt>Batch z-score</dt><dd>2.00
+      <span class="fit-detail">Fit mean $30.00 &middot; scale $10.00</span></dd></div><div><dt>Replay z-score</dt><dd>2.00
+      <span class="fit-detail">Fit mean $30.00 &middot; scale $10.00</span></dd></div>
+        </dl>
+        <div class="trail">
+          <p class="cause">As-of join: <strong>Cutoff update</strong> (2026-11-10) &middot;
+            2.00 &middot; <span class="good">No unavailable inputs</span></p>
+          <h3>Scaler fit records</h3>
+          <p class="cause">Prediction input: <strong>$50.00</strong></p>
+          <p class="cause">All candidate inputs were available at prediction time.</p>
+          <ul>
+          <li id="scaler-clean-T1-v1" class="record">
+            <div><strong>T1-v1</strong> <span>$20.00</span></div>
+            <div><span>Event 2026-11-04</span> <span>Available 2026-11-04</span></div>
+            <div>Batch fit / Replay fit</div>
+          </li>
+          <li id="scaler-clean-T2-v1" class="record">
+            <div><strong>T2-v1</strong> <span>$40.00</span></div>
+            <div><span>Event 2026-11-08</span> <span>Available 2026-11-08</span></div>
+            <div>Batch fit / Replay fit</div>
+          </li>
+          <li id="scaler-clean-T3-v1" class="record">
+            <div><strong>T3-v1</strong> <span>$90.00</span></div>
+            <div><span>Event 2026-11-30</span> <span>Available 2026-11-30</span></div>
+            <div>Not used</div>
+          </li></ul>
+        </div>
+      </details>
+    </section>
+    <section aria-labelledby="validation">
+      <h2 id="validation">Validation studies</h2>
+      
+      <div class="study">
+        <h3>Scaler fitting on a chronological holdout</h3>
+        <p class="axis-label">Mean ROC-AUC &middot; 0 to 1 &middot; Higher is better</p><ul class="auc-chart">
+      <li><span>Full-data fit</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:90.99%"></i></span>
+        <strong>0.9099</strong></li>
+      <li><span>Training-only fit</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:90.96%"></i></span>
+        <strong>0.9096</strong></li></ul>
+        <p class="cause">160 holdout rows entered each full-data scaler fit; none entered training-only fits.
+        Both models used training labels only and scored the same holdout. Mean log loss:
+        0.3886 full-data fit;
+        0.3878 training-only fit.</p>
+      </div>
+      <div class="study">
+        <h3>Validation on a dependent time series</h3>
+        <p class="axis-label">Mean ROC-AUC &middot; 0 to 1 &middot; Higher is better</p><ul class="auc-chart">
+      <li><span>Random validation</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:92.94%"></i></span>
+        <strong>0.9294</strong></li>
+      <li><span>Forward validation</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:50.58%"></i></span>
+        <strong>0.5058</strong></li>
+      <li><span>Future holdout</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:53.60%"></i></span>
+        <strong>0.5360</strong></li></ul>
+        <p class="cause">Validation rows with a training row in the next 8 steps:
+        558/560 random, 0/560 forward. Seed 0: validation step 2 had training step 3 in its future.</p>
+        <p class="cause">The classifier uses a noisy measurement and the known time step. Development folds have matched
+        sizes but score different rows. The future holdout is a separate reference: the classifier is refit on all development
+        data, then evaluated after a gap.</p>
+      </div>
+      <details class="study-seeds">
+        <summary>ROC-AUC by seed</summary>
+        <div class="score-scroll" tabindex="0" role="region" aria-label="Per-seed ROC-AUC">
+        <table><thead><tr><th>Seed</th><th>Full fit</th><th>Train fit</th><th>Random</th><th>Forward</th><th>Future</th></tr></thead>
+        <tbody>
+      <tr><th scope="row">0</th><td>0.9109</td><td>0.9107</td>
+        <td>0.8902</td><td>0.5292</td><td>0.5000</td></tr>
+      <tr><th scope="row">1</th><td>0.9161</td><td>0.9162</td>
+        <td>0.9598</td><td>0.5000</td><td>0.5000</td></tr>
+      <tr><th scope="row">2</th><td>0.9027</td><td>0.9023</td>
+        <td>0.8779</td><td>0.5000</td><td>0.4997</td></tr>
+      <tr><th scope="row">3</th><td>0.8932</td><td>0.8925</td>
+        <td>0.9591</td><td>0.5000</td><td>0.6019</td></tr>
+      <tr><th scope="row">4</th><td>0.9268</td><td>0.9262</td>
+        <td>0.9600</td><td>0.5000</td><td>0.5784</td></tr></tbody></table></div>
+      </details>
+    </section>
+    <section aria-labelledby="target-leakage">
+      <h2 id="target-leakage">Target-derived features</h2>
+      
+      <div class="study">
+        <h3>Build outcome on a chronological holdout</h3>
+        <p class="axis-label">Mean ROC-AUC &middot; 0 to 1 &middot; Higher is better</p><ul class="auc-chart">
+      <li><span>Retrospective badge</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:89.31%"></i></span>
+        <strong>0.8931</strong></li>
+      <li><span>Same model, replay</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:72.83%"></i></span>
+        <strong>0.7283</strong></li>
+      <li><span>Clean model, replay</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:73.02%"></i></span>
+        <strong>0.7302</strong></li></ul>
+        <p class="cause">The retrospective badge is a noisy encoding of the result. Live replay removes it from
+        the same fitted model; the clean control trains without it. Both models score the same holdout rows.</p>
+      </div>
+      <details open>
+        <summary><span class="case-title">Prediction for build B480</span></summary>
+        <div class="trail">
+          <h3>Outcome sources</h3>
+          <p class="cause">Prediction at step 480. The backdated badge points to the outcome of
+          <a href="#outcome-480">this same build</a>.</p>
+          <ul>
+          <li id="outcome-479" class="record">
+            <div><strong>Previous build result</strong> <span>Build B479</span></div>
+            <div><span>Recorded step 480</span> <span>Completed step 480</span></div>
+            <div><span>Timestamp passed</span>
+                 <strong class="good">Prior outcome</strong></div>
+          </li>
+          <li id="outcome-480" class="record witness">
+            <div><strong>Retry badge</strong> <span>Build B480</span></div>
+            <div><span>Recorded step 480</span> <span>Completed step 481</span></div>
+            <div><span>Timestamp passed</span>
+                 <strong class="bad">Own outcome</strong></div>
+          </li></ul>
+        </div>
+      </details>
+    </section>
+    <section aria-labelledby="churn">
+      <h2 id="churn">30-day churn labels</h2>
+      
+      <div class="study">
+        <p class="cause">The newer ticket count (7) was written before prediction but published the next day.
+          The backward join returns the older count (2). The label looks forward for cancellation
+          after prediction through day 30, inclusive. It stays unknown if the outcome data ends early.</p>
+      </div>
+      <div class="score-scroll" role="region" aria-label="30-day churn label examples" tabindex="0">
+        <table><thead><tr><th scope="col">Customer</th><th scope="col">Tickets at prediction</th>
+          <th scope="col">Cancellation</th><th scope="col">Follow-up</th><th scope="col">30-day label</th>
+        </tr></thead><tbody><tr><th scope="row">A</th><td>2</td>
+          <td>Day 12</td><td>30 days</td><td>Churned</td></tr><tr><th scope="row">B</th><td>2</td>
+          <td>Day 30</td><td>30 days</td><td>Churned</td></tr><tr><th scope="row">C</th><td>2</td>
+          <td>Day 31</td><td>35 days</td><td>No churn</td></tr><tr><th scope="row">D</th><td>2</td>
+          <td>None observed</td><td>30 days</td><td>No churn</td></tr><tr><th scope="row">E</th><td>2</td>
+          <td>None observed</td><td>18 days</td><td>Excluded</td></tr></tbody></table>
+      </div>
+    </section>
+    <section aria-labelledby="ci-duration">
+      <h2 id="ci-duration">Real CI job duration</h2>
+      
+      <article class="ci-cohort" aria-labelledby="ci-pandas">
+        <div class="study">
+          <h3 id="ci-pandas">pandas Unit Tests &middot; 2026-11-21..2026-11-23</h3>
+          <p class="axis-label">Mean window ROC-AUC &middot; 0 to 1 &middot; Higher is better</p><ul class="auc-chart">
+      <li><span>No duration</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:50.09%"></i></span>
+        <strong>0.5009</strong></li>
+      <li><span>Prior completed duration</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:47.27%"></i></span>
+        <strong>0.4727</strong></li>
+      <li><span>Current duration (leaky)</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:74.35%"></i></span>
+        <strong>0.7435</strong></li></ul>
+          <p class="cause">1,906 evaluated jobs with 42 failures across four non-overlapping windows.
+          AUC is averaged over the 2 windows with both outcomes. 534 source records were ineligible.</p>
+          <p class="cause">Mean average precision in those windows: No duration: 0.0514; Prior completed duration: 0.0654; Current duration (leaky): 0.5405.</p>
+          <p class="cause">Log loss across all jobs: No duration: 0.1026; Prior completed duration: 0.1029; Current duration (leaky): 0.1044.</p>
+          <p class="cause">Own final duration unavailable for 1,906/1,906 evaluated jobs.
+          1,906 had a known prior duration; 693 had an earlier-started same-name job
+          from another run that was not yet complete.</p>
+        </div>
+        <details>
+          <summary><span class="case-title">Forward evaluation windows</span></summary>
+          <div class="score-scroll" tabindex="0" role="region" aria-label="Forward evaluation windows">
+          <table><thead><tr><th>Window</th><th>Cutoff UTC</th><th>Train</th><th>Purged</th><th>Test</th><th>Failures</th>
+          <th>No duration AUC</th><th>Prior AUC</th><th>Current AUC</th></tr></thead>
+          <tbody><tr><th scope="row">1</th><td>11-21 17:02</td><td>200</td>
+      <td>320</td><td>560</td><td>0</td>
+      <td>n/a</td><td>n/a</td><td>n/a</td></tr><tr><th scope="row">2</th><td>11-22 05:31</td><td>1,042</td>
+      <td>38</td><td>472</td><td>39</td>
+      <td>0.5461</td><td>0.5474</td><td>0.4870</td></tr><tr><th scope="row">3</th><td>11-22 23:37</td><td>1,552</td>
+      <td>0</td><td>421</td><td>3</td>
+      <td>0.4557</td><td>0.3979</td><td>1.0000</td></tr><tr><th scope="row">4</th><td>11-23 13:53</td><td>1,969</td>
+      <td>4</td><td>453</td><td>0</td>
+      <td>n/a</td><td>n/a</td><td>n/a</td></tr></tbody></table></div>
+        </details>
+        <details open>
+          <summary><span class="case-title">Linux-32-bit &middot; workflow run 44927818451</span></summary>
+          <div class="trail"><h3>Recorded start and completion</h3><ul>
+          <li class="record witness">
+            <div><strong>Current job</strong><a href="https://github.com/pandas-dev/pandas/actions/runs/44927818451/job/136917675096">136917675096</a></div>
+            <div><span>Start 2026-11-21 17:02:17 +0000</span>
+            <span>End 2026-11-21 17:14:45 +0000</span></div>
+            <div>748 s</div>
+          </li>
+          <li class="record witness">
+            <div><strong>Earlier start, not yet complete</strong><a href="https://github.com/pandas-dev/pandas/actions/runs/44927794148/job/136917601149">136917601149</a></div>
+            <div><span>Start 2026-11-21 17:02:02 +0000</span>
+            <span>End 2026-11-21 17:14:44 +0000</span></div>
+            <div>762 s</div>
+          </li>
+          <li class="record">
+            <div><strong>Known prior duration</strong><a href="https://github.com/pandas-dev/pandas/actions/runs/44917313833/job/136885582147">136885582147</a></div>
+            <div><span>Start 2026-11-21 15:05:44 +0000</span>
+            <span>End 2026-11-21 15:27:36 +0000</span></div>
+            <div>1,312 s</div>
+          </li></ul></div>
+        </details>
+      </article>
+      <article class="ci-cohort" aria-labelledby="ci-scipy">
+        <div class="study">
+          <h3 id="ci-scipy">SciPy Linux tests &middot; 2026-11-17..2026-11-23</h3>
+          <p class="axis-label">Mean window ROC-AUC &middot; 0 to 1 &middot; Higher is better</p><ul class="auc-chart">
+      <li><span>No duration</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:82.04%"></i></span>
+        <strong>0.8204</strong></li>
+      <li><span>Prior completed duration</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:81.42%"></i></span>
+        <strong>0.8142</strong></li>
+      <li><span>Current duration (leaky)</span>
+        <span class="auc-track" aria-hidden="true"><i style="width:80.11%"></i></span>
+        <strong>0.8011</strong></li></ul>
+          <p class="cause">827 evaluated jobs with 80 failures across four non-overlapping windows.
+          AUC is averaged over the 4 windows with both outcomes. 190 source records were ineligible.</p>
+          <p class="cause">Mean average precision in those windows: No duration: 0.4663; Prior completed duration: 0.4557; Current duration (leaky): 0.4928.</p>
+          <p class="cause">Log loss across all jobs: No duration: 0.2467; Prior completed duration: 0.2464; Current duration (leaky): 0.2463.</p>
+          <p class="cause">Own final duration unavailable for 827/827 evaluated jobs.
+          827 had a known prior duration; 96 had an earlier-started same-name job
+          from another run that was not yet complete.</p>
+        </div>
+        <details>
+          <summary><span class="case-title">Forward evaluation windows</span></summary>
+          <div class="score-scroll" tabindex="0" role="region" aria-label="Forward evaluation windows">
+          <table><thead><tr><th>Window</th><th>Cutoff UTC</th><th>Train</th><th>Purged</th><th>Test</th><th>Failures</th>
+          <th>No duration AUC</th><th>Prior AUC</th><th>Current AUC</th></tr></thead>
+          <tbody><tr><th scope="row">1</th><td>11-18 00:10</td><td>238</td>
+      <td>0</td><td>167</td><td>18</td>
+      <td>0.8126</td><td>0.7724</td><td>0.6652</td></tr><tr><th scope="row">2</th><td>11-19 00:55</td><td>405</td>
+      <td>0</td><td>184</td><td>24</td>
+      <td>0.8270</td><td>0.8194</td><td>0.8268</td></tr><tr><th scope="row">3</th><td>11-20 10:51</td><td>589</td>
+      <td>0</td><td>232</td><td>19</td>
+      <td>0.7735</td><td>0.7803</td><td>0.7971</td></tr><tr><th scope="row">4</th><td>11-22 13:08</td><td>811</td>
+      <td>10</td><td>244</td><td>19</td>
+      <td>0.8683</td><td>0.8847</td><td>0.9151</td></tr></tbody></table></div>
+        </details>
+        <details open>
+          <summary><span class="case-title">Install into venv, cluster only, pyAny/npAny, pip+cluster.test() &middot; workflow run 44399513708</span></summary>
+          <div class="trail"><h3>Recorded start and completion</h3><ul>
+          <li class="record witness">
+            <div><strong>Current job</strong><a href="https://github.com/scipy/scipy/actions/runs/44399513708/job/135138455564">135138455564</a></div>
+            <div><span>Start 2026-11-18 21:15:19 +0000</span>
+            <span>End 2026-11-18 21:23:50 +0000</span></div>
+            <div>511 s</div>
+          </li>
+          <li class="record witness">
+            <div><strong>Earlier start, not yet complete</strong><a href="https://github.com/scipy/scipy/actions/runs/44398268563/job/135134104810">135134104810</a></div>
+            <div><span>Start 2026-11-18 21:08:19 +0000</span>
+            <span>End 2026-11-18 21:16:58 +0000</span></div>
+            <div>519 s</div>
+          </li>
+          <li class="record">
+            <div><strong>Known prior duration</strong><a href="https://github.com/scipy/scipy/actions/runs/44383373045/job/135081415890">135081415890</a></div>
+            <div><span>Start 2026-11-18 19:44:27 +0000</span>
+            <span>End 2026-11-18 19:51:23 +0000</span></div>
+            <div>416 s</div>
+          </li></ul></div>
+        </details>
+      </article>
+    </section>
+    
+      <section aria-labelledby="fixed-window">
+        <h2 id="fixed-window">Fixed-window verifier</h2>
+        <details open>
+          <summary><span class="case-title">Account 7: 0 to 60 s, excluding the end</span></summary>
+          <dl class="values">
+            <div><dt>Cutoff</dt><dd>60 s</dd></div>
+            <div><dt>Verdict</dt><dd class="bad">Leak</dd></div>
+            <div><dt>Batch average</dt><dd>$50.00</dd></div>
+            <div><dt>Replay average</dt><dd>$30.00</dd></div>
+          </dl>
+          <div class="trail"><h3>Automatically tracked records</h3>
+            <p class="cause"><a href="#fixed-row-3">Transaction 3</a> was unavailable at the cutoff.</p>
+            <ul><li class="record" id="fixed-row-1">
+      <div><strong>Transaction 1</strong> <span>$20.00</span></div>
+      <div><span>Occurred at 10 s</span> <span>Available at 10 s</span></div>
+      <div>Known at cutoff</div></li><li class="record" id="fixed-row-2">
+      <div><strong>Transaction 2</strong> <span>$40.00</span></div>
+      <div><span>Occurred at 30 s</span> <span>Available at 30 s</span></div>
+      <div>Known at cutoff</div></li><li class="record witness" id="fixed-row-3">
+      <div><strong>Transaction 3</strong> <span>$90.00</span></div>
+      <div><span>Occurred at 50 s</span> <span>Available at 75 s</span></div>
+      <div>After cutoff</div></li></ul>
+          </div>
+        </details>
+        
+          <div class="study"><h3>Equivalent replay benchmark</h3>
+            <p class="cause">81,920 synthetic rows; seed 0; median of 3
+            runs. Both methods returned identical findings. Peak extra allocation excludes the shared input.</p>
+          </div>
+          <div class="score-scroll" tabindex="0" role="region" aria-label="Window benchmark costs">
+          <table><thead><tr><th>Queries and method</th><th>Build (ms)</th><th>Query (ms)</th>
+          <th>Total (ms)</th><th>Peak (MiB)</th></tr></thead><tbody><tr><th scope="row">100 &middot; Scan replay</th>
+                  <td>78.8</td><td>1.1</td><td>80.2</td>
+                  <td>6.74</td></tr><tr><th scope="row">100 &middot; Indexed</th>
+                  <td>108.9</td><td>0.3</td><td>109.1</td>
+                  <td>6.74</td></tr><tr><th scope="row">8,000 &middot; Scan replay</th>
+                  <td>81.8</td><td>92.6</td><td>172.9</td>
+                  <td>6.74</td></tr><tr><th scope="row">8,000 &middot; Indexed</th>
+                  <td>103.0</td><td>13.8</td><td>116.7</td>
+                  <td>6.74</td></tr><tr><th scope="row">40,000 &middot; Scan replay</th>
+                  <td>79.9</td><td>453.6</td><td>533.4</td>
+                  <td>10.23</td></tr><tr><th scope="row">40,000 &middot; Indexed</th>
+                  <td>110.1</td><td>93.4</td><td>200.7</td>
+                  <td>10.99</td></tr></tbody></table></div>
+      </section>
+  </main>
+</body>
+</html>
